@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPL Cricket Game</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #071b35;
+    color: white;
+    text-align: center;
+}
+
+header {
+    background: #ff7b00;
+    padding: 18px;
+    font-size: 25px;
+    font-weight: bold;
+}
+
+.container {
+    padding: 18px;
+    max-width: 500px;
+    margin: auto;
+}
+
+select, button {
+    padding: 12px;
+    margin: 6px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+select {
+    width: 85%;
+}
+
+button {
+    background: #ff7b00;
+    color: white;
+    font-weight: bold;
+}
+
+button:disabled {
+    background: #777;
+}
+
+.scoreboard {
+    background: #123f36;
+    border: 2px solid #51e89b;
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.score {
+    font-size: 38px;
+    font-weight: bold;
+}
+
+.ground {
+    background: #168447;
+    border: 5px solid #8bda70;
+    border-radius: 50%;
+    height: 160px;
+    margin: 20px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 65px;
+}
+
+.message {
+    min-height: 50px;
+    font-size: 18px;
+    margin: 15px;
+}
+
+.hidden {
+    display: none;
+}
+</style>
+</head>
+
+<body>
+
+<header>🏆 IPL CRICKET</header>
+
+<div class="container">
+
+<h2>Select Your Teams</h2>
+
+<select id="team1">
+    <option>RCB</option>
+    <option>CSK</option>
+    <option>MI</option>
+    <option>KKR</option>
+    <option>SRH</option>
+    <option>RR</option>
+    <option>DC</option>
+    <option>PBKS</option>
+    <option>GT</option>
+    <option>LSG</option>
+</select>
+
+<p>VS</p>
+
+<select id="team2">
+    <option>CSK</option>
+    <option>RCB</option>
+    <option>MI</option>
+    <option>KKR</option>
+    <option>SRH</option>
+    <option>RR</option>
+    <option>DC</option>
+    <option>PBKS</option>
+    <option>GT</option>
+    <option>LSG</option>
+</select>
+
+<p>
+    <label for="overs">Overs:</label>
+    <select id="overs">
+        <option value="2">2 Overs</option>
+        <option value="5">5 Overs</option>
+        <option value="10">10 Overs</option>
+        <option value="20" selected>20 Overs</option>
+    </select>
+</p>
+
+<button onclick="startMatch()">START MATCH 🏏</button>
+
+<div id="game" class="hidden">
+
+    <div class="ground">🏏</div>
+
+    <div class="scoreboard">
+        <h2 id="battingTeam">RCB</h2>
+        <div class="score" id="score">0/0</div>
+        <p id="over">Overs: 0.0</p>
+        <p id="target"></p>
+    </div>
+
+    <h3>Choose Your Shot</h3>
+
+    <button onclick="playBall(0)">DEFEND</button>
+    <button onclick="playBall(1)">1 RUN</button>
+    <button onclick="playBall(2)">2 RUNS</button>
+    <button onclick="playBall(3)">3 RUNS</button>
+    <button onclick="playBall(4)">FOUR</button>
+    <button onclick="playBall(6)">SIX</button>
+
+    <div class="message" id="message">
+        Your innings starts now!
+    </div>
+
+    <button onclick="newMatch()">NEW MATCH 🔄</button>
+
+</div>
+
+</div>
+
+<script>
+let teamA, teamB, batting;
+let runs = 0, wickets = 0, balls = 0;
+let maxBalls = 120;
+let target = null;
+let innings = 1;
+let firstInningsScore = 0;
+let finished = false;
+
+function startMatch() {
+    teamA = document.getElementById("team1").value;
+    teamB = document.getElementById("team2").value;
+
+    if (teamA === teamB) {
+        alert("Choose two different teams!");
+        return;
+    }
+
+    maxBalls = Number(document.getElementById("overs").value) * 6;
+
+    runs = 0;
+    wickets = 0;
+    balls = 0;
+    target = null;
+    innings = 1;
+    firstInningsScore = 0;
+    finished = false;
+    batting = teamA;
+
+    document.getElementById("game").classList.remove("hidden");
+    document.getElementById("message").textContent =
+        teamA + " are batting first!";
+
+    updateScore();
+}
+
+function playBall(shot) {
+    if (finished) return;
+
+    // The computer randomly selects its bowling number.
+    let delivery = Math.floor(Math.random() * 7);
+
+    if (shot === delivery) {
+        wickets++;
+        document.getElementById("message").textContent =
+            "OUT! The bowler fooled the batter.";
+    } else {
+        // A simple arcade-style batting result.
+        let scored = shot;
+
+        // A defensive shot can occasionally score a single.
+        if (shot === 0) {
+            scored = Math.random() < 0.25 ? 1 : 0;
+        }
+
+        runs += scored;
+
+        document.getElementById("message").textContent =
+            scored === 6 ? "SIX! What a shot! 🚀" :
+            scored === 4 ? "FOUR! Beautiful boundary! 🔥" :
+            scored + " run(s) scored!";
+    }
+
+    balls++;
+    updateScore();
+
+    if (innings === 2 && runs >= target) {
+        endMatch();
+        return;
+    }
+
+    if (wickets >= 10 || balls >= maxBalls) {
+        endInnings();
+    }
+}
+
+function updateScore() {
+    document.getElementById("battingTeam").textContent = batting;
+    document.getElementById("score").textContent = runs + "/" + wickets;
+
+    let completedOvers = Math.floor(balls / 6);
+    let remainingBalls = balls % 6;
+
+    document.getElementById("over").textContent =
+        "Overs: " + completedOvers + "." + remainingBalls;
+
+    document.getElementById("target").textContent =
+        target === null ? "" : "Target: " + target;
+}
+
+function endInnings() {
+    if (innings === 1) {
+        firstInningsScore = runs;
+        target = firstInningsScore + 1;
+
+        innings = 2;
+        batting = teamB;
+        runs = 0;
+        wickets = 0;
+        balls = 0;
+
+        document.getElementById("message").textContent =
+            teamB + " need " + target + " runs to win!";
+
+        updateScore();
+    } else {
+        endMatch();
+    }
+}
+
+function endMatch() {
+    finished = true;
+
+    let result;
+
+    if (runs >= target) {
+        result = batting + " WIN! 🏆";
+    } else if (runs === firstInningsScore) {
+        result = "MATCH TIED!";
+    } else {
+        result = teamA + " WIN! 🏆";
+    }
+
+    document.getElementById("message").textContent =
+        "MATCH OVER — " + result;
+}
+
+function newMatch() {
+    document.getElementById("game").classList.add("hidden");
+    document.getElementById("message").textContent = "";
+}
+</script>
+
+</body>
+      </html>
